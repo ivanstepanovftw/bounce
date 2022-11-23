@@ -13,7 +13,7 @@ const SCALING: Vec2 = Vec2::splat(2.0);
 
 fn main() {
     App::new()
-        .insert_resource(ClearColor(Color::rgb(1.0, 0.0, 1.0)))
+        .insert_resource(ClearColor(Color::rgb(0.0, 0.0, 0.0)))
         .add_plugins(DefaultPlugins
             .set(WindowPlugin {
                 window: WindowDescriptor {

@@ -28,7 +28,7 @@ pub struct Acceleration(pub Vec2);
 pub struct OnGround(pub bool);
 
 
-const GRAVITY: Vec2 = Vec2::new(0., -981.0);
+const GRAVITY: Vec2 = Vec2::new(0., -1000.0);
 
 
 impl Plugin for PlayerPlugin {
@@ -50,6 +50,7 @@ impl PlayerPlugin {
             .spawn(SpriteSheetBundle {
                 sprite: TextureAtlasSprite::new(2),
                 texture_atlas: graphics.texture_atlas.clone(),
+                transform: Transform::from_xyz(0., 0., 100.),
                 ..default()
             })
             .insert(Player)
@@ -69,10 +70,10 @@ impl PlayerPlugin {
             // Moving
             if keyboard_input.pressed(KeyCode::Left) {
                 // acceleration.0.x = -100.;
-                velocity.0.x = -100.;
+                velocity.0.x = -200.;
             } else if keyboard_input.pressed(KeyCode::Right) {
                 // acceleration.0.x = 100.;
-                velocity.0.x = 100.;
+                velocity.0.x = 200.;
             } else {
                 velocity.0.x = 0.;
                 // acceleration.0.x = 0.;
@@ -80,8 +81,7 @@ impl PlayerPlugin {
 
             // Jump
             if keyboard_input.pressed(KeyCode::Up) && on_ground.0 {
-                dbg!("jump");
-                velocity.0.y = 200.;
+                velocity.0.y = 400.;
             }
         }
 
@@ -108,6 +108,7 @@ impl PlayerPlugin {
 
             // Transform
             transform.translation = position.0.extend(0.);
+            transform.translation.z = 100.; // FIXME: keep Z index
         }
     }
 }

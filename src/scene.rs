@@ -11,6 +11,7 @@ use bevy::{
     utils::BoxedFuture,
 };
 use bevy::ecs::system::EntityCommands;
+use crate::scene::Id::*;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum AppState {
@@ -89,44 +90,69 @@ impl ScenePlugin {
 
         for row in 0..tile_map_height {
             for col in 0..tile_map_width {
-                if (tile_map[row][col] & 0x80) != 0 {
-                    tile_map[row][col] &= 0x7f;
+                if (tile_map[row][col] & ID_COLLIDER_FLAG) != 0 {
+                    tile_map[row][col] &= ID_COLLIDER_MASK;
                 }
                 let mut id = tile_map[row][col];
-                let isWater = (id & obj::ID_WATER_FLAG) != 0;
-                if isWater {
-                    id &= 0xbf;
+                let is_water = (id & ID_WATER_FLAG) != 0;
+                if is_water {
+                    id &= ID_WATER_MASK;
                 }
 
-                commands.spawn(SpriteBundle {
-                    transform: Transform {
-                        translation: Vec3::new(0.0, 0.0, 0.0),
-                        rotation: Quat::from_rotation_z(0.0),
-                        scale: Vec3::new(1.0, 1.0, 0.0),
-                    },
+                let t = Transform {
+                    translation: Vec3::new(col as f32 * 12.0, row as f32 * -12.0 + 12. * 7., 0.0),
+                    rotation: Quat::from_rotation_z(0.0),
+                    scale: Vec3::new(1.0, 1.0, 0.0),
+                };
+                let mut c = commands.spawn(SpriteBundle {
+                    transform: t.clone(),
                     sprite: Sprite {
-                        color: Color::rgb(1., 1., 1.),
+                        color: BACKGROUND_COLOUR,
                         custom_size: Some(Vec2::new(12.0, 12.0)),
                         ..default()
                     },
                     ..default()
                 });
 
+                let atlas_index: Option<u8> = match id {
+                    ID_BRICK_RED => Some(1),
+                    ID_BRICK_BLUE => Some(9),
+                    ID_SPIKE_FLOOR |
+                    ID_SPIKE_LEFT_WALL |
+                    ID_SPIKE_CEILING |
+                    ID_SPIKE_RIGHT_WALL => Some(12),
+                    ID_HOOP_ACTIVE_VERT_TOP |
+                    ID_HOOP_ACTIVE_VERT_BOTTOM |
+                    ID_HOOP_ACTIVE_HORIZ_LEFT |
+                    ID_HOOP_ACTIVE_HORIZ_RIGHT => Some(21),
+                    ID_HOOP_INACTIVE_VERT_TOP |
+                    ID_HOOP_INACTIVE_VERT_BOTTOM |
+                    ID_HOOP_INACTIVE_HORIZ_LEFT |
+                    ID_HOOP_INACTIVE_HORIZ_RIGHT => Some(23),
+                    ID_LARGE_HOOP_ACTIVE_VERT_TOP |
+                    ID_LARGE_HOOP_ACTIVE_VERT_BOTTOM |
+                    ID_LARGE_HOOP_ACTIVE_HORIZ_LEFT |
+                    ID_LARGE_HOOP_ACTIVE_HORIZ_RIGHT => Some(20),
+                    ID_LARGE_HOOP_INACTIVE_VERT_TOP |
+                    ID_LARGE_HOOP_INACTIVE_VERT_BOTTOM |
+                    ID_LARGE_HOOP_INACTIVE_HORIZ_LEFT |
+                    ID_LARGE_HOOP_INACTIVE_HORIZ_RIGHT => Some(22),
+                    _ => None,
+                };
+
                 match id {
-                    // obj::ID_BRICK_RED => {
-                    //     c.insert(SpriteSheetBundle {
-                    //         sprite: TextureAtlasSprite::new(id as usize),
-                    //         texture_atlas: graphics.texture_atlas.clone(),
-                    //         transform: Transform::from_xyz(
-                    //             col as f32 * 12.0,
-                    //             row as f32 * -12.0 + 12. * 8.,
-                    //             0.0,
-                    //         ),
-                    //         ..default()
-                    //     });
-                    // }
-                    obj::ID_EMPTY_SPACE => {
-                        ;
+                    ID_BRICK_RED |
+                    ID_BRICK_BLUE |
+                    ID_HOOP_ACTIVE_VERT_TOP |
+                    ID_HOOP_ACTIVE_VERT_BOTTOM |
+                    ID_HOOP_ACTIVE_HORIZ_LEFT |
+                    ID_HOOP_ACTIVE_HORIZ_RIGHT => {
+                        c.insert(SpriteSheetBundle {
+                            sprite: TextureAtlasSprite::new(atlas_index.unwrap().into()),
+                            texture_atlas: graphics.texture_atlas.clone(),
+                            transform: t.clone(),
+                            ..default()
+                        });
                     }
                     _ => {
                         // c.insert(SpriteSheetBundle {
@@ -192,7 +218,9 @@ impl ScenePlugin {
 // }
 
 
-pub mod obj {
+pub mod Id {
+    use bevy::prelude::Color;
+
     pub const ID_EMPTY_SPACE: u8 = 0;
     pub const ID_BRICK_RED: u8 = 1;
     pub const ID_BRICK_BLUE: u8 = 2;
@@ -247,8 +275,11 @@ pub mod obj {
     pub const ID_JUMP_CEILING: u8 = 53;
     pub const ID_JUMP_RIGHT_WALL: u8 = 54;
 
+    pub const BACKGROUND_COLOUR: Color = Color::rgb(0.69, 0.88, 0.94);
+    pub const WATER_COLOUR: Color = Color::rgb(0.06, 0.38, 0.69);
+
     pub const ID_WATER_FLAG: u8 = 1 << 6;
-    pub const ID_COLLISION_FLAG: u8 = 1 << 7;
+    pub const ID_COLLIDER_FLAG: u8 = 1 << 7;
     pub const ID_WATER_MASK: u8 = !ID_WATER_FLAG;
-    pub const ID_COLLISION_MASK: u8 = ID_COLLISION_FLAG;
+    pub const ID_COLLIDER_MASK: u8 = !ID_COLLIDER_FLAG;
 }
